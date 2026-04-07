@@ -7,119 +7,101 @@ app.use(express.json());
 app.use(cors());
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "./public/images/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
-
+    destination: (req, file, cb) => {
+      cb(null, "./public/images/");
+    },
+    filename: (req, file, cb) => {
+      cb(null, file.originalname);
+    },
+  });
+  
 const upload = multer({ storage: storage });
 
-let skills = [
-  {
-    "_id": 1,
-    "title": "Guitar Basics",
-    "img_name": "guitarbasics.png",
-    "category": "Music",
-    "level": "Beginner",
-    "lessons": 6,
-    "instructor": "Alex M.",
-    "description": "Open chords, strumming patterns, and 3 easy songs."
-  },
-  {
-    "_id": 2,
-    "title": "Intro to Web Design",
-    "img_name": "introtoweb.png",
-    "category": "Tech",
-    "level": "Intermediate",
-    "lessons": 8,
-    "instructor": "Priya S.",
-    "description": "HTML/CSS fundamentals and simple responsive layout."
-  },
-  {
-    "_id": 3,
-    "title": "Personal Fitness",
-    "img_name": "personalfitness.png",
-    "category": "Health",
-    "level": "Advanced",
-    "lessons": 10,
-    "instructor": "Rafael K.",
-    "description": "Strength, mobility, and tailored home workouts."
-  },
-  {
-    "_id": 4,
-    "title": "Digital Photography",
-    "img_name": "digitalphotography.png",
-    "category": "Creative",
-    "level": "Beginner",
-    "lessons": 5,
-    "instructor": "Jamie L.",
-    "description": "Basic camera settings, composition, and editing tips."
-  },
-  {
-    "_id": 5,
-    "title": "Spanish Basics",
-    "img_name": "spanishbasics.png",
-    "category": "Language",
-    "level": "Beginner",
-    "lessons": 6,
-    "instructor": "María R.",
-    "description": "Everyday phrases, pronunciation, and short dialogues."
-  },
-  {
-    "_id": 6,
-    "title": "Intro to Painting",
-    "img_name": "introtopainting.png",
-    "category": "Art",
-    "level": "Beginner",
-    "lessons": 4,
-    "instructor": "C. Nguyen",
-    "description": "Watercolor basics and easy still-life exercises."
-  },
-  {
-    "_id": 7,
-    "title": "Songwriting Essentials",
-    "img_name": "songwriting_essentials.png",
-    "category": "Music",
-    "level": "Intermediate",
-    "lessons": 4,
-    "instructor": "Alex M.",
-    "description": "Structure, melody, and lyric writing exercises for original songs."
-  },
-  {
-    "_id": 8,
-    "title": "Portrait Lighting Basics",
-    "img_name": "portrait_lighting.png",
-    "category": "Creative",
-    "level": "Beginner",
-    "lessons": 3,
-    "instructor": "Jamie L.",
-    "description": "Simple lighting setups for flattering portraits using natural and artificial light."
-  },
-  {
-    "_id": 9,
-    "title": "Intro to Adobe Illustrator",
-    "img_name": "intro_to_illustrator.png",
-    "category": "Tech",
-    "level": "Beginner",
-    "lessons": 6,
-    "instructor": "Priya S.",
-    "description": "Vector basics: shapes, pen tool, type, and exporting assets for web."
-  }
+let houses = [
+    {
+        "_id":1,
+        "name": "Farmhouse",
+        "size": 2000,
+        "bedrooms": 3,
+        "bathrooms": 2.5,
+        "features": [
+            "wrap around porch",
+            "attached garage"
+        ],
+        "main_image": "farm.webp",
+        "floor_plans": [
+            {
+                "name": "Main Level",
+                "image": "farm-floor1.webp"
+            },
+            {
+                "name": "Basement",
+                "image": "farm-floor2.webp"
+            }
+        ]
+    },
+    {
+        "_id":2,
+        "name": "Mountain House",
+        "size": 1700,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "features": [
+            "grand porch",
+            "covered deck"
+        ],
+        "main_image": "mountain-house.webp",
+        "floor_plans": [
+            {
+                "name": "Main Level",
+                "image": "mountain-house1.webp"
+            },
+            {
+                "name": "Optional Lower Level",
+                "image": "mountain-house2.webp"
+            },
+            {
+                "name": "Main Level Slab Option",
+                "image": "mountain-house3.jpg"
+            }
+        ]
+    },
+    {
+        "_id":3,
+        "name": "Lake House",
+        "size": 3000,
+        "bedrooms": 4,
+        "bathrooms": 3,
+        "features": [
+            "covered deck",
+            "outdoor kitchen",
+            "pool house"
+        ],
+        "main_image": "lake-house.jpg",
+        "floor_plans": [
+            {
+                "name": "Main Level",
+                "image": "lake-house1.webp"
+            },
+            {
+                "name": "Lower Level",
+                "image": "lake-house2.webp"
+            }
+        ]
+    }
 ]
 
-app.get("/api/skills", (req,res)=>{
-  res.send(skills);
+app.get("/api/houses",(req,res)=>{
+  res.send(houses);
 });
 
-app.get("/api/skills/:id", (req,res)=>{
-  const skill=skills.find((h)=>h._id===parseInt(req.params.id));
-  res.send(skill);
+app.get("/api/houses/:id", (req,res)=>{
+  const house=houses.find((h)=>h._id===parseInt(req.params.id));
+  res.send(house);
 });
 
 //listen for incoming requests
-app.listen(3001, ()=>{
-  console.log("Server is up and running");
+const port = process.env.PORT || 3001;
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server is up and running on ${port}`);
 });
