@@ -20,8 +20,7 @@ const storage = multer.diskStorage({
   
 const upload = multer({ storage: storage });
 
-mongoose
-  .connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("connected to mongodb");
   })
@@ -29,90 +28,28 @@ mongoose
     console.log("couldn't connect to mongodb", error);
   });
 
-let houses = [
-    {
-        "_id":1,
-        "name": "Farmhouse",
-        "size": 2000,
-        "bedrooms": 3,
-        "bathrooms": 2.5,
-        "features": [
-            "wrap around porch",
-            "attached garage"
-        ],
-        "main_image": "farm.webp",
-        "floor_plans": [
-            {
-                "name": "Main Level",
-                "image": "farm-floor1.webp"
-            },
-            {
-                "name": "Basement",
-                "image": "farm-floor2.webp"
-            }
-        ]
-    },
-    {
-        "_id":2,
-        "name": "Mountain House",
-        "size": 1700,
-        "bedrooms": 3,
-        "bathrooms": 2,
-        "features": [
-            "grand porch",
-            "covered deck"
-        ],
-        "main_image": "mountain-house.webp",
-        "floor_plans": [
-            {
-                "name": "Main Level",
-                "image": "mountain-house1.webp"
-            },
-            {
-                "name": "Optional Lower Level",
-                "image": "mountain-house2.webp"
-            },
-            {
-                "name": "Main Level Slab Option",
-                "image": "mountain-house3.jpg"
-            }
-        ]
-    },
-    {
-        "_id":3,
-        "name": "Lake House",
-        "size": 3000,
-        "bedrooms": 4,
-        "bathrooms": 3,
-        "features": [
-            "covered deck",
-            "outdoor kitchen",
-            "pool house"
-        ],
-        "main_image": "lake-house.jpg",
-        "floor_plans": [
-            {
-                "name": "Main Level",
-                "image": "lake-house1.webp"
-            },
-            {
-                "name": "Lower Level",
-                "image": "lake-house2.webp"
-            }
-        ]
-    }
-]
-
-app.get("/api/houses",(req,res)=>{
-  res.send(houses);
+const houseSchema = new mongoose.Schema({
+    name:String,
+    size:Number,
+    bedrooms:Number,
+    bathrooms:Number,
+    main_image:String,
+    features:[String]
 });
 
-app.get("/api/houses/:id", (req,res)=>{
-  const house=houses.find((h)=>h._id===parseInt(req.params.id));
+const House = mongoose.model("House", houseSchema);
+
+app.get("/api/houses",async(req,res)=>{
+    const houses = await House.find();
+    res.send(houses);
+});
+
+app.get("/api/houses/:id", async(req,res)=>{
+  const house = await House.findById(req.params.id);
   res.send(house);
 });
 
-app.post("/api/houses", upload.single("img") ,(req,res)=>{
+app.post("/api/houses", upload.single("img") ,async(req,res)=>{
     //console.log("In post request");
     //console.log(req.body);
     const result = validateHouse(req.body);
@@ -124,35 +61,26 @@ app.post("/api/houses", upload.single("img") ,(req,res)=>{
     }
     console.log("Passed validation");
     console.log(req.body);
-    const house = {
-        _id:houses.length+1,
+    const house = new House({
         name:req.body.name,
         size:req.body.size,
         bedrooms:req.body.bedrooms,
         bathrooms:req.body.bathrooms,
         features:req.body.features.split(/\r?\n/).filter(line => line.trim() !== "")
-    }
+    });
 
     //adding an image
     if(req.file){
         house.main_image = req.file.filename;
     }
 
-    houses.push(house);
+    const newHouse = await house.save();
     //console.log(houses);
-    res.status(200).send(house);
+    res.status(200).send(newHouse);
 });
 
-app.put("/api/houses/:id", upload.single("img") , (req,res)=>{
+app.put("/api/houses/:id", upload.single("img") , async(req,res)=>{
     console.log("In put");
-    //console.log(req.body);
-
-    const house = houses.find((h)=>h._id===parseInt(req.params.id));
-    
-    if(!house){
-        res.status(404).send("The house you wanted to modify is not available");
-        return;
-    }
 
     const result = validateHouse(req.body);
 
@@ -162,31 +90,36 @@ app.put("/api/houses/:id", upload.single("img") , (req,res)=>{
         return;
     }
 
-    house.name = req.body.name;
-    house.size = req.body.size;
-    house.bedrooms = req.body.bedrooms;
-    house.bathrooms = req.body.bathrooms;
-    house.features = req.body.features.split(/\r?\n/).filter(line => line.trim() !== "");
-
+    const fieldsToUpdate = {
+        name: req.body.name,
+        size: req.body.size,
+        bedrooms: req.body.bedrooms,
+        bathrooms: req.body.bathrooms,
+        features: req.body.features.split(/\r?\n/).filter(line => line.trim() !== "")
+    }
     //adding an image
     if(req.file){
-        house.main_image = req.file.filename;
+        fieldsToUpdate.main_image = req.file.filename;
     }
 
-    res.status(200).send(house);
+    const success = await House.updateOnehouse({_id:req.params.id}, fieldsToUpdate);
 
+    if(!success) {
+        res.status(404).send("We couldn't find that house");
+    } else {
+        const house = await House.findById(req.params.id);
+        res.status(200).send(house);
+    }
 });
 
-app.delete("/api/houses/:id", (req,res)=>{
-    const house = houses.find((h)=>h._id===parseInt(req.params.id));
+app.delete("/api/houses/:id", async(req,res)=>{
+    const house = await House.findByIdAndDelete(req.params.id);
 
     if(!house){
         res.status(404).send("The house you wanted to delete is not available");
         return;
     }
 
-    const index = houses.indexOf(house);
-    houses.splice(index,1);
     res.status(200).send(house);
 });
 
